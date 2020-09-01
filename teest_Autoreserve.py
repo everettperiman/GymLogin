@@ -6,26 +6,55 @@ Created on Sun Aug 30 17:33:47 2020
 """
 
 from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.expected_conditions import presence_of_element_located
+import chromedriver_binary
 from selenium.common.exceptions import NoSuchElementException
 
+import json
 import configparser
 import time
 
 
+class slotItem():
+    def __init__(self,webElementObject,ID):
+        self.webObj =webElementObject
+        self.id = ID
+        self.text = webElementObject.text
+        self.time_properties = self.getSlotInformation(self.text)
+        
+    def getSlotInformation(self,slotText):
+        old_index = 0
+        outputArray = []
+        for index, element in enumerate(slotText):
+            if element == "\n":
+                outputArray.append(slotText[old_index : index])
+                old_index = index + 1
+        for item in outputArray:
+            if item == '':
+                outputArray.remove(item)
+        return outputArray
+
 class reserveBot():
-    def __init__(self,uName,uPass):
-        webdriver_path = r'C:\Users\evere\anaconda3\geckodriver.exe'
-        self.driver = webdriver.Firefox(executable_path=webdriver_path)
-        self.userName = uName
-        self.userPass = uPass
+    def __init__(self):
+        self.driver = webdriver.Chrome()
+        self.userName = ''
+        self.userPass = ''
         self.url = "https://ucfrwc.org/Program/GetProducts?productTypeCV=00000000-0000-0000-0000-000000003502"
-        self.wait = WebDriverWait(self.driver, 10)
         self.retries = 5
-    
+        self.allSlots = []
+        self.openSlots = []
+        self.scheduleSlots = []
+        self.schedule = {}
+        
+    def getLoginDetails(self,address):
+        config = configparser.ConfigParser()
+        config.read(address)    
+        self.userName = config['LOGIN']['username']
+        self.userPass = config['LOGIN']['password']
+            
+    def getScheduleDetails(self,address):
+        with open(address, "r") as read_file:
+            self.schedule = json.load(read_file)
+
     def nidLogin(self):
         self.driver.find_element_by_id('loginLink').click() #Log In Button
         self.handleElementCSS(".btn-soundcloud", self.retries) # UCF NID Option
@@ -89,31 +118,38 @@ class reserveBot():
         # As of yet for these numbers
         # This section determines the max # of slots and returns an array of
         # WebElement objects
-        goodSlots = []
         defaultSlots = [i for i in range(0,100) if (i-1) % 3 == 0]
         defaultStrings = ["div.col-sm-6:nth-child({}) > div:nth-child(1) > div:nth-child(1)".format(i) for i in defaultSlots]
         for index, string in enumerate(defaultStrings):
             try:
-                goodSlots.append([self.driver.find_element_by_css_selector(string), defaultSlots[index]])        
+                slot_Obj = self.driver.find_element_by_css_selector(string)
+                self.allSlots.append(slotItem(slot_Obj, defaultSlots[index]))
             except NoSuchElementException:
                 pass    
             except Exception as e:
                 print(e)
                 print("Bad slot" + string)
-        
-        return goodSlots;
-    
+
     def getOpenSlots(self):
         # Filters the results of the getSlots method to return Slots that have
         # Open reservation availability
-        slotElements = self.getSlots()
-        open_slots = []
-        for slot in slotElements:
-            if "No Spots" not in slot[0].text:
-                open_slots.append(slot)
-        return open_slots;
-                         
-    def siteHomepage(self):
+        self.getSlots()
+        for slot in self.allSlots:
+            if "No Spots" not in slot.text:
+                self.openSlots.append(slot)
+
+    def getScheduleSlots(self):
+        # Filters the results of the getSlots method to return Slots that have
+        # Open reservation availability
+        self.getOpenSlots()
+        if len(self.openSlots) > 0:
+            for slot in self.openSlots:
+                for key,value in self.schedule.items():
+                    if key in slot.time_properties[0]:
+                        if value in slot.time_properties[1]:
+                            self.scheduleSlots.append(slot)
+
+    def getHomePage(self):
         # Resets the current tab to the main selection page to create more
         # Reservations
         home_url = 'https://ucfrwc.org/Program/GetProducts'
@@ -123,36 +159,37 @@ class reserveBot():
         # Takes the child(slotID) of the desired slot and finishes the 
         # Checkout process
         slotID = "div.col-sm-6:nth-child({}) > div:nth-child(1) > div:nth-child(1) > div:nth-child(3) > button:nth-child(1)".format(slotID)
-        self.driver.find_element_by_css_selector(slotID).click()
-        self.driver.find_element_by_css_selector("div.container-fluid:nth-child(6) > button:nth-child(2)").click()
-        self.driver.find_element_by_css_selector("#checkoutButton").click()
+        self.handleElementCSS(slotID, self.retries)
+        self.handleElementCSS("div.container-fluid:nth-child(6) > button:nth-child(2)", self.retries)
+        self.handleElementCSS("#checkoutButton", self.retries)
         if not test:
-            self.driver.find_element_by_css_selector("div.modal-footer:nth-child(2) > button:nth-child(2)").click()
+            self.handleElementCSS("div.modal-footer:nth-child(2) > button:nth-child(2)", self.retries)
+        else:
+            self.handleElementCSS("div.modal-footer:nth-child(2) > button:nth-child(1)", self.retries)
+            self.handleElementCSS("button.allow-navigation:nth-child(1)", self.retries)
 
         
 if __name__ == "__main__":
     
     refresh_count = 0
-    config = configparser.ConfigParser()
-    config.read(r'C:\Users\evere\OneDrive\Desktop\login.ini')
+
+    EasyMoney = reserveBot()
     
-    EasyMoney = reserveBot(config['LOGIN']['username'], config['LOGIN']['password'])
-    EasyMoney.schedule = config['SCHEDULE']['options']
+    loginDetails = r'C:\Users\evere\OneDrive\Desktop\login.ini'
+    scheduleDetails = r'C:\Users\evere\OneDrive\Desktop\schedule.txt'
+    EasyMoney.getLoginDetails(loginDetails)
+    EasyMoney.getScheduleDetails(scheduleDetails)    
+    
     EasyMoney.driver.get(EasyMoney.url)
     EasyMoney.nidLogin()
     EasyMoney.navPage("facilitys","gym")
     
-    while True:
-        pink = EasyMoney.getOpenSlots()
-        if len(pink) > 0:
-            print(refresh_count)
-            EasyMoney.reserveSlot(pink[0][-1])
-                
-            break
-        refresh_count += 1
-        time.sleep(5)
-        EasyMoney.driver.refresh()
 
+    pink = EasyMoney.getScheduleSlots()
+    print(EasyMoney.scheduleSlots[0].time_properties)
+    
+    #purple = pink[0][0].text
+    #EasyMoney.getSlotInformation(purple)
     
     
     
