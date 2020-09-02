@@ -118,6 +118,7 @@ class reserveBot():
         # As of yet for these numbers
         # This section determines the max # of slots and returns an array of
         # WebElement objects
+        self.allSlots.clear()
         defaultSlots = [i for i in range(0,100) if (i-1) % 3 == 0]
         defaultStrings = ["div.col-sm-6:nth-child({}) > div:nth-child(1) > div:nth-child(1)".format(i) for i in defaultSlots]
         for index, string in enumerate(defaultStrings):
@@ -133,6 +134,7 @@ class reserveBot():
     def getOpenSlots(self):
         # Filters the results of the getSlots method to return Slots that have
         # Open reservation availability
+        self.openSlots.clear()
         self.getSlots()
         for slot in self.allSlots:
             if "No Spots" not in slot.text:
@@ -141,6 +143,7 @@ class reserveBot():
     def getScheduleSlots(self):
         # Filters the results of the getSlots method to return Slots that have
         # Open reservation availability
+        self.scheduleSlots.clear()
         self.getOpenSlots()
         if len(self.openSlots) > 0:
             for slot in self.openSlots:
@@ -168,6 +171,16 @@ class reserveBot():
             self.handleElementCSS("div.modal-footer:nth-child(2) > button:nth-child(1)", self.retries)
             self.handleElementCSS("button.allow-navigation:nth-child(1)", self.retries)
 
+def logFreeSlots(slotArray,name="log.txt"):
+    read_time = time.ctime()
+    print(read_time)
+    with open(name,"a") as file:
+        if len(slotArray) > 0:
+            for slot in slotArray:
+                file.write(read_time + ", " + slot.time_properties[0] + ", " + slot.time_properties[1] + ", " + slot.time_properties[2][0:2] + "\n")
+        else:
+            file.write(read_time + ", No Free Slots" + "\n")
+
         
 if __name__ == "__main__":
     
@@ -182,14 +195,14 @@ if __name__ == "__main__":
     
     EasyMoney.driver.get(EasyMoney.url)
     EasyMoney.nidLogin()
-    EasyMoney.navPage("facilitys","gym")
+    EasyMoney.navPage("facilitys","pool")
     
-
-    pink = EasyMoney.getScheduleSlots()
-    print(EasyMoney.openSlots[0].time_properties)
-    
-    #purple = pink[0][0].text
-    #EasyMoney.getSlotInformation(purple)
+    while True:
+        pink = EasyMoney.getOpenSlots()
+        logFreeSlots(EasyMoney.openSlots,name="pool_log.txt")
+        print(EasyMoney.openSlots[0].time_properties)
+        time.sleep(30)
+        EasyMoney.driver.refresh()
     
     
     
