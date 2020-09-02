@@ -177,7 +177,7 @@ def logFreeSlots(slotArray,name="log.txt"):
     with open(name,"a") as file:
         if len(slotArray) > 0:
             for slot in slotArray:
-                file.write(read_time + ", " + slot.time_properties[0] + ", " + slot.time_properties[1] + ", " + slot.time_properties[2][0:2] + "\n")
+                file.write(read_time + ", " + slot.time_properties[0].replace(",","") + ", " + slot.time_properties[1] + ", " + slot.time_properties[2][0:2] + "\n")
         else:
             file.write(read_time + ", No Free Slots" + "\n")
 
