@@ -13,7 +13,7 @@ def readLog(name="log.txt"):
     df.columns = ['TimeStamp', 'SlotDate', 'SlotTime', 'Spots']
     
     df['TimeStamp'] = df['TimeStamp'].apply(lambda x:
-                                            dt.datetime.strptime(x, '%a %b  %w %I:%M:%S %Y'))
+                                            dt.datetime.strptime(x, '%a %b  %w %H:%M:%S %Y'))
     xtick_list = generateTicks(df['TimeStamp'].iloc[0], df['TimeStamp'].iloc[-1])   
     
     df_unique = df['SlotTime'].unique()
@@ -53,8 +53,8 @@ def generateTicks(time_low,time_high):
     return tickList
 
 if __name__ == "__main__":
+   # name = "gym_log.txt"
+   # readLog(name)
     name = "gym_log.txt"
-    readLog(name)
-    name = "pool_log.txt"
     readLog(name)    
     

@@ -195,12 +195,12 @@ if __name__ == "__main__":
     
     EasyMoney.driver.get(EasyMoney.url)
     EasyMoney.nidLogin()
-    EasyMoney.navPage("facilitys","pool")
+    EasyMoney.navPage("facilitys","gym")
     
     while True:
         pink = EasyMoney.getOpenSlots()
-        logFreeSlots(EasyMoney.openSlots,name="pool_log.txt")
-        print(EasyMoney.openSlots[0].time_properties)
+        logFreeSlots(EasyMoney.openSlots,name="gym_log.txt")
+       # print(EasyMoney.openSlots[0].time_properties)
         time.sleep(30)
         EasyMoney.driver.refresh()
     
