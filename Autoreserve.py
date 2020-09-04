@@ -16,7 +16,7 @@ import time
 
 class slotItem():
     def __init__(self,webElementObject,ID):
-        self.webObj =webElementObject
+        self.webObj = webElementObject
         self.id = ID
         self.text = webElementObject.text
         self.time_properties = self.getSlotInformation(self.text)
@@ -139,6 +139,8 @@ class reserveBot():
         for slot in self.allSlots:
             if "No Spots" not in slot.text:
                 self.openSlots.append(slot)
+            else:
+                slot.time_properties[-1] = "0 spot(s) available"
 
     def getScheduleSlots(self):
         # Filters the results of the getSlots method to return Slots that have
@@ -199,7 +201,7 @@ if __name__ == "__main__":
     
     while True:
         pink = EasyMoney.getOpenSlots()
-        logFreeSlots(EasyMoney.openSlots,name="gym_log.txt")
+        logFreeSlots(EasyMoney.allSlots,name="gym_log.txt")
        # print(EasyMoney.openSlots[0].time_properties)
         time.sleep(30)
         EasyMoney.driver.refresh()
