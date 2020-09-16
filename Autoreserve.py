@@ -43,17 +43,19 @@ class reserveBot():
         self.allSlots = []
         self.openSlots = []
         self.scheduleSlots = []
-        self.schedule = {}
+        #self.schedule = ""
         
     def getLoginDetails(self,address):
         config = configparser.ConfigParser()
         config.read(address)    
         self.userName = config['LOGIN']['username']
         self.userPass = config['LOGIN']['password']
-            
+
     def getScheduleDetails(self,address):
         with open(address, "r") as read_file:
             self.schedule = json.load(read_file)
+        print(self.schedule)
+
 
     def nidLogin(self):
         self.driver.find_element_by_id('loginLink').click() #Log In Button
@@ -149,10 +151,9 @@ class reserveBot():
         self.getOpenSlots()
         if len(self.openSlots) > 0:
             for slot in self.openSlots:
-                for key,value in self.schedule.items():
-                    if key in slot.time_properties[0]:
-                        if value in slot.time_properties[1]:
-                            self.scheduleSlots.append(slot)
+                for schedule in self.schedule['Schedule']:
+                   if (schedule['Day'] in slot.time_properties[0] and schedule['Time'] in slot.time_properties[1][:8]):
+                       self.scheduleSlots.append(slot)
 
     def getHomePage(self):
         # Resets the current tab to the main selection page to create more
@@ -197,14 +198,13 @@ if __name__ == "__main__":
     
     EasyMoney.driver.get(EasyMoney.url)
     EasyMoney.nidLogin()
-    EasyMoney.navPage("facilitys","gym")
+    EasyMoney.navPage("facilitys","pool")
     
-    while True:
-        pink = EasyMoney.getOpenSlots()
-        logFreeSlots(EasyMoney.allSlots,name="gym_log.txt")
-       # print(EasyMoney.openSlots[0].time_properties)
-        time.sleep(30)
-        EasyMoney.driver.refresh()
+    pink = EasyMoney.getOpenSlots()
+    scheduledTimes = EasyMoney.getScheduleSlots();
+    print(EasyMoney.scheduleSlots[0].time_properties[0])
+    EasyMoney.reserveSlot(EasyMoney.scheduleSlots[0].id)
+
     
     
     

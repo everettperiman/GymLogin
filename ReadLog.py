@@ -8,6 +8,7 @@ Created on Wed Sep  2 08:54:35 2020
 import pandas as pd
 import datetime as dt
 import matplotlib.pyplot as plt
+import numpy
 
 def readLog(name="log.txt"):
     df = pd.read_csv(name,header=None)
@@ -15,13 +16,18 @@ def readLog(name="log.txt"):
     
     df['TimeStamp'] = df['TimeStamp'].apply(lambda x:
                                             dt.datetime.strptime(x, '%a %b  %w %H:%M:%S %Y'))
-
-    xtick_list = generateTicks(df['TimeStamp'].iloc[0], df['TimeStamp'].iloc[-1])   
     
     df_unique = df['SlotTime'].unique()
     df_split = []
+    print(df_unique)
+    for index, item in enumerate(df_unique):
+        print(item)
+        print(type(item))
+        if pd.isnull(item):
+            df_final = numpy.delete(df_unique, index)
+    print(df_final)
 
-    for i in df_unique:
+    for i in df_final:
         local = []
         for data in df.itertuples():
             if data[3] == i:
@@ -30,8 +36,7 @@ def readLog(name="log.txt"):
         df_local.columns = ['Index','TimeStamp', 'SlotDate', 'SlotTime', 'Spots']
         df_split.append(df_local)
     plotSeriesData(df_split)
-
-
+    
 def plotSeriesData(dfList):
     f = plt.figure()
     plt.title('Legend Outside', color='black')
@@ -58,4 +63,5 @@ if __name__ == "__main__":
    # readLog(name)
     name = "gym_log.txt"
     readLog(name)    
-    
+    name = "pool_log.txt"
+    readLog(name)  
