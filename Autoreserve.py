@@ -54,7 +54,6 @@ class reserveBot():
     def getScheduleDetails(self,address):
         with open(address, "r") as read_file:
             self.schedule = json.load(read_file)
-        print(self.schedule)
 
 
     def nidLogin(self):
@@ -200,7 +199,6 @@ if __name__ == "__main__":
     EasyMoney.nidLogin()
     EasyMoney.navPage("facilitys","pool")
     
-    pink = EasyMoney.getOpenSlots()
     scheduledTimes = EasyMoney.getScheduleSlots();
     print(EasyMoney.scheduleSlots[0].time_properties[0])
     EasyMoney.reserveSlot(EasyMoney.scheduleSlots[0].id)
