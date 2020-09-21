@@ -74,6 +74,37 @@ class reserveBot():
         self.scheduleSlots = []
         self.printFlag = printFlag
         
+    def getPage(self, url):
+        self.driver.get(url)
+        
+    def printSlots(self,slotList):
+        for slot in slotList:
+            print(str(slot.id) + " " + slot.time_properties[0] + " " + slot.time_properties[1])
+
+    def handleElementXpath(self,xpath,attempts,sleepTime = 1):
+        # Handle pages loading to slow or something temporarily covering 
+        # The desired option
+        i = 0
+        while(i < attempts):
+            try:
+                self.driver.find_element_by_xpath(xpath).click()
+                break
+            except:
+                time.sleep(sleepTime)
+                i += 1
+                
+    def handleElementCSS(self,cssSelector,attempts,sleepTime = 1):
+        # Handle pages loading to slow or something temporarily covering 
+        # The desired option
+        i = 0
+        while(i < attempts):
+            try:
+                self.driver.find_element_by_css_selector(cssSelector).click()
+                break
+            except:
+                time.sleep(sleepTime)
+                i += 1   
+    
     def nidLogin(self, username, password):
         self.driver.find_element_by_id('loginLink').click() #Log In Button
         self.handleElementCSS(".btn-soundcloud", self.retries) # UCF NID Option
@@ -83,11 +114,6 @@ class reserveBot():
         self.handleElementCSS("#gdpr-cookie-accept", self.retries) # Accept cookies button to avoid future errors
         if (self.printFlag):
             print("Login Success!")
-
-
-    def getPage(self, url):
-        self.driver.get(url)
-
 
     def navFacilities(self,classif = None, option=None):
         # Xpath Keys for all of the Classification and subcategories
@@ -113,31 +139,7 @@ class reserveBot():
         self.handleElementXpath(xpath_child, self.retries)
         
         if (self.printFlag):
-            print("Navigate Success!")
-    
-    def handleElementXpath(self,xpath,attempts,sleepTime = 1):
-        # Handle pages loading to slow or something temporarily covering 
-        # The desired option
-        i = 0
-        while(i < attempts):
-            try:
-                self.driver.find_element_by_xpath(xpath).click()
-                break
-            except:
-                time.sleep(sleepTime)
-                i += 1
-                
-    def handleElementCSS(self,cssSelector,attempts,sleepTime = 1):
-        # Handle pages loading to slow or something temporarily covering 
-        # The desired option
-        i = 0
-        while(i < attempts):
-            try:
-                self.driver.find_element_by_css_selector(cssSelector).click()
-                break
-            except:
-                time.sleep(sleepTime)
-                i += 1        
+            print("Navigate Success!")     
         
     def getSlots(self):
         # All of the slots are layed out as child(number) with these4 numnbers
@@ -180,10 +182,6 @@ class reserveBot():
                    if (schedule['Day'] in slot.time_properties[0] and schedule['Time'] in slot.time_properties[1][:8]):
                        self.scheduleSlots.append(slot)
         
-    def printSlots(self,slotList):
-        for slot in slotList:
-            print(str(slot.id) + " " + slot.time_properties[0] + " " + slot.time_properties[1])
-        
     def reserveSlot(self,slotID,test=True):
         # Takes the child(slotID) of the desired slot and finishes the 
         # Checkout process
@@ -216,7 +214,7 @@ if __name__ == "__main__":
 
     next_slot = Bot.scheduleSlots[0]
     
-    Bot.reserveSlot(next_slot.id,test=False)
+    Bot.reserveSlot(next_slot.id)
     
 
     
