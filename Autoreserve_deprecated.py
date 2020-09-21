@@ -31,7 +31,7 @@ class slotItem():
         for item in outputArray:
             if item == '':
                 outputArray.remove(item)
-        return outputArray
+        return outputArrays
 
 class reserveBot():
     def __init__(self):
