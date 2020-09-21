@@ -1,1 +1,1 @@
-{"Wednesday":"8:00 AM"}
+{"Schedule":[{"Day":"Thursday", "Time":"9:00 AM"}, {"Day":"Thursday", "Time":"4:00 PM"}]}
