@@ -59,13 +59,18 @@ class slotItem():
                 outputArray.remove(item)
         return outputArray
         
-        
+class logBot():
+    def __init__(self):
+        pass
+    
+    def storeReading(self):
+        pass
     
 class reserveBot():
     def __init__(self, printFlag = True):
-        chrome_options = Options()  
-        chrome_options.add_argument("--headless") 
-        self.driver = webdriver.Chrome(options=chrome_options)
+       # chrome_options = Options()  
+       # chrome_options.add_argument("--headless") 
+        self.driver = webdriver.Chrome()#options=chrome_options)
         self.url = "https://ucfrwc.org/Program/GetProducts?productTypeCV=00000000-0000-0000-0000-000000003502"
         self.home_url = 'https://ucfrwc.org/Program/GetProducts'
         self.retries = 5
@@ -166,7 +171,7 @@ class reserveBot():
         self.openSlots.clear()
         self.getSlots()
         for slot in self.allSlots:
-            if "No Spots" not in slot.text:
+            if ("Register" in slot.text):
                 self.openSlots.append(slot)
             else:
                 slot.time_properties[-1] = "0 spot(s) available"
@@ -182,22 +187,26 @@ class reserveBot():
                    if (schedule['Day'] in slot.time_properties[0] and schedule['Time'] in slot.time_properties[1][:8]):
                        self.scheduleSlots.append(slot)
         
-    def reserveSlot(self,slotID,test=True):
+    def reserveNextSlot(self,scheduleSlots,test=True):
         # Takes the child(slotID) of the desired slot and finishes the 
         # Checkout process
-        slotID = "div.col-sm-6:nth-child({}) > div:nth-child(1) > div:nth-child(1) > div:nth-child(3) > button:nth-child(1)".format(slotID)
-        self.handleElementCSS(slotID, self.retries)
-        self.handleElementCSS("div.container-fluid:nth-child(6) > button:nth-child(2)", self.retries)
-        self.handleElementCSS("#checkoutButton", self.retries)
-        if not test:
-            self.handleElementCSS("div.modal-footer:nth-child(2) > button:nth-child(2)", self.retries)
-            if (self.printFlag):
-                print("Reservation Success!")
+        if len(scheduleSlots) > 0:
+            slot_id = scheduleSlots[0]
+            slotID = "div.col-sm-6:nth-child({}) > div:nth-child(1) > div:nth-child(1) > div:nth-child(3) > button:nth-child(1)".format(slot_id)
+            self.handleElementCSS(slotID, self.retries)
+            self.handleElementCSS("div.container-fluid:nth-child(6) > button:nth-child(2)", self.retries)
+            self.handleElementCSS("#checkoutButton", self.retries)
+            if not test:
+                self.handleElementCSS("div.modal-footer:nth-child(2) > button:nth-child(2)", self.retries)
+                if (self.printFlag):
+                    print("Reservation Success!")
+            else:
+                self.handleElementCSS("div.modal-footer:nth-child(2) > button:nth-child(1)", self.retries)
+                self.handleElementCSS("button.allow-navigation:nth-child(1)", self.retries)
+                if (self.printFlag):
+                    print("Test Success!")      
         else:
-            self.handleElementCSS("div.modal-footer:nth-child(2) > button:nth-child(1)", self.retries)
-            self.handleElementCSS("button.allow-navigation:nth-child(1)", self.retries)
-            if (self.printFlag):
-                print("Test Success!")
+            print("No Slots to Reserve")
         
 if __name__ == "__main__":
     Everett = userDetails();
@@ -211,10 +220,8 @@ if __name__ == "__main__":
     Bot.getScheduleSlots(Everett.schedule)
     Bot.printSlots(Bot.allSlots)
     Bot.printSlots(Bot.scheduleSlots)
-
-    next_slot = Bot.scheduleSlots[0]
     
-    Bot.reserveSlot(next_slot.id)
+    Bot.reserveNextSlot(Bot.scheduleSlots)
     
 
     
