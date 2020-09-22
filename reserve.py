@@ -10,6 +10,7 @@ import chromedriver_binary
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.chrome.options import Options
+import matplotlib.pyplot as plt
 import json
 import configparser
 import time
@@ -88,12 +89,45 @@ class logBot():
         self.logFile = logFile
     
     def storeReading(self, slots):
+        curDateTime = dt.datetime.now().isoformat()
         with open(self.logFile, 'a', newline = '') as log:
             for slot in slots:
+                log.write(curDateTime + " ")
                 log.write(slot.dateTime.isoformat())
                 log.write(" {} \n".format(slot.spaces))
             print("Log Success")
-    
+   
+    def getReadings(self):
+        dataLogArray = []
+        with open(self.logFile, 'r', newline = '') as log:
+            dataLog = log.readlines()
+        
+        dataLogArray = [(dt.datetime.fromisoformat(line[:26]), 
+                         dt.datetime.fromisoformat(line[27:46]), 
+                         int(line[-3:-2])) for line in dataLog]
+        self.dataLogArray = dataLogArray
+        
+    def displayPlot(self):
+        try:
+            dataArray = self.dataLogArray
+        except:
+            print("No data to display!")
+            print("Call getReadings first!")
+            return
+            
+        seriesArray = []
+        for i in dataArray:
+            if i[1] not in seriesArray:
+                seriesArray.append(i[1])
+        for i in seriesArray:
+            x_slots = []
+            y_slots = []
+            for j in dataArray:
+                if i == j[1]:
+                    x_slots.append(j[0])
+                    y_slots.append(j[-1])
+            plt.plot(x_slots, y_slots)
+
 class reserveBot():
     def __init__(self, printFlag = True):
         chrome_options = Options()  
