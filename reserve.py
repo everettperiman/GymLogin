@@ -7,12 +7,13 @@ Created on Sun Aug 30 17:33:47 2020
 
 from selenium import webdriver
 import chromedriver_binary
+from webdriver_manager.chrome import ChromeDriverManager
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.chrome.options import Options
 import json
 import configparser
 import time
-
+import datetime as dt
 
 class userDetails():
     def init(self):
@@ -20,13 +21,13 @@ class userDetails():
         self.password
         self.schedule
     
-    def get_login(self, loginDir = r'C:\Users\evere\OneDrive\Desktop\login.ini'):
+    def get_login(self, loginDir):
         config = configparser.ConfigParser()
         config.read(loginDir)    
         self.username = config['LOGIN']['username']
         self.password = config['LOGIN']['password']
     
-    def get_schedule(self, schDir = r'C:\Users\evere\OneDrive\Desktop\schedule.txt'):
+    def get_schedule(self, schDir):
         with open(schDir, "r") as read_file:
             self.schedule = json.load(read_file)
     
@@ -39,38 +40,65 @@ class userDetails():
         print("Password: " + self.password)
         self.print_schedule()
 
-
 class slotItem():
     def __init__(self,webObject,_id):
         self.object = webObject
         self.id = _id
         self.text = webObject.text
         self.time_properties = self.getSlotInformation(self.text)
+        self.spaces = self.getSlotSpaces(self.time_properties)
+        self.dateTime = self.getSlotDatetime(self.time_properties)
         
     def getSlotInformation(self,slotText):
+        stringA = ""
+        slotInfoArr = []
         old_index = 0
-        outputArray = []
-        for index, element in enumerate(slotText):
-            if element == "\n":
-                outputArray.append(slotText[old_index : index])
+        for index, char in enumerate(slotText):
+            if char == "\n":
+                stringA = slotText[old_index : index]
                 old_index = index + 1
-        for item in outputArray:
-            if item == '':
-                outputArray.remove(item)
-        return outputArray
-        
-class logBot():
-    def __init__(self):
-        pass
+                if len(stringA) > 0:
+                    slotInfoArr.append(stringA)
+        return slotInfoArr
     
-    def storeReading(self):
-        pass
+    def getSlotDatetime(self, slotInfoArray):
+        slotInfo = slotInfoArray[0] + " " + slotInfoArray[1]
+        for index, char in enumerate(slotInfo):
+            if char == "-":
+                stop_index = index
+                
+        green = dt.datetime.strptime(slotInfo[:stop_index], "%A, %B %d, %Y %I:%M %p ")
+        return green
+        
+    def getSlotSpaces(self, slotInfoArray):
+        stop_index = 0
+        retSpaces = 0
+        for char in slotInfoArray[-1]:
+            stop_index += 1 
+            if char == " ":
+                if (slotInfoArray[-1][:stop_index - 1] != "No"):
+                    retSpaces = int(slotInfoArray[-1][:stop_index - 1])
+                else:
+                    retSpaces = 0
+                break
+        return retSpaces
+       
+class logBot():
+    def __init__(self, logFile):
+        self.logFile = logFile
+    
+    def storeReading(self, slots):
+        with open(self.logFile, 'a', newline = '') as log:
+            for slot in slots:
+                log.write(slot.dateTime.isoformat())
+                log.write(" {} \n".format(slot.spaces))
+            print("Log Success")
     
 class reserveBot():
     def __init__(self, printFlag = True):
-       # chrome_options = Options()  
-       # chrome_options.add_argument("--headless") 
-        self.driver = webdriver.Chrome()#options=chrome_options)
+        chrome_options = Options()  
+        chrome_options.add_argument("--headless") 
+        self.driver = webdriver.Chrome(ChromeDriverManager().install(),options=chrome_options)
         self.url = "https://ucfrwc.org/Program/GetProducts?productTypeCV=00000000-0000-0000-0000-000000003502"
         self.home_url = 'https://ucfrwc.org/Program/GetProducts'
         self.retries = 5
@@ -82,9 +110,18 @@ class reserveBot():
     def getPage(self, url):
         self.driver.get(url)
         
+    def refreshPage(self):
+        self.driver.refresh()
+        
     def printSlots(self,slotList):
-        for slot in slotList:
-            print(str(slot.id) + " " + slot.time_properties[0] + " " + slot.time_properties[1])
+        print("\nPrinting Slot List!\n")
+        if len(slotList) > 0:
+            for slot in slotList:
+                print(str(slot.spaces) + " " + slot.time_properties[0] + " " + slot.time_properties[1])
+        else:
+            print("No Slots in list")
+            
+        print("")
 
     def handleElementXpath(self,xpath,attempts,sleepTime = 1):
         # Handle pages loading to slow or something temporarily covering 
@@ -171,10 +208,8 @@ class reserveBot():
         self.openSlots.clear()
         self.getSlots()
         for slot in self.allSlots:
-            if ("Register" in slot.text):
+            if (slot.spaces > 0):
                 self.openSlots.append(slot)
-            else:
-                slot.time_properties[-1] = "0 spot(s) available"
 
     def getScheduleSlots(self, user_schedule):
         # Filters the results of the getSlots method to return Slots that have
@@ -209,9 +244,11 @@ class reserveBot():
             print("No Slots to Reserve")
         
 if __name__ == "__main__":
+    login_dir = r'C:\Users\evere\OneDrive\Desktop\login.ini'
+    schedule_dir = r'C:\Users\evere\OneDrive\Desktop\schedule.txt'
     Everett = userDetails();
-    Everett.get_login();
-    Everett.get_schedule();
+    Everett.get_login(login_dir);
+    Everett.get_schedule(schedule_dir);
     
     Bot = reserveBot();
     Bot.getPage(Bot.url)
@@ -221,8 +258,10 @@ if __name__ == "__main__":
     Bot.printSlots(Bot.allSlots)
     Bot.printSlots(Bot.scheduleSlots)
     
-    Bot.reserveNextSlot(Bot.scheduleSlots)
+    #Bot.reserveNextSlot(Bot.scheduleSlots)
     
+    LogItDown = logBot('pool.txt')
+    LogItDown.storeReading(Bot.allSlots)
 
     
     
