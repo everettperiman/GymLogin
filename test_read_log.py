@@ -12,5 +12,6 @@ import matplotlib.pyplot as plt
 
 if __name__ == "__main__":   
     LogBot = logBot("pool.txt")
-    LogBot.getReadings()
-    LogBot.displayPlot()
+    while(True):
+        LogBot.getReadings()
+        LogBot.displayPlot(30)

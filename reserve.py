@@ -107,7 +107,7 @@ class logBot():
                          int(line[-3:-2])) for line in dataLog]
         self.dataLogArray = dataLogArray
         
-    def displayPlot(self):
+    def displayPlot(self, displayTime = 99999):
         try:
             dataArray = self.dataLogArray
         except:
@@ -116,10 +116,13 @@ class logBot():
             return
             
         seriesArray = []
+        counter = 1
         for i in dataArray:
             if i[1] not in seriesArray:
                 seriesArray.append(i[1])
         for i in seriesArray:
+            line_label = "Line {}".format(counter)
+            counter += 1
             x_slots = []
             y_slots = []
             for j in dataArray:
@@ -127,6 +130,9 @@ class logBot():
                     x_slots.append(j[0])
                     y_slots.append(j[-1])
             plt.plot(x_slots, y_slots)
+        plt.show(block=False)
+        plt.pause(displayTime)
+        plt.close()
 
 class reserveBot():
     def __init__(self, printFlag = True):
